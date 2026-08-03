@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiro — Tu WhatsApp que nunca duerme</title>
+<meta name="description" content="Kiro contesta, agenda y confirma tus citas por WhatsApp las 24 horas. Peluquerías, clínicas y academias: dejad de perder reservas fuera de horario.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Kiro — Tu WhatsApp que nunca duerme">
+<meta property="og:description" content="Kiro contesta, agenda y confirma tus citas por WhatsApp las 24 horas. Tú solo abres la agenda llena.">
+<meta property="og:locale" content="es_ES">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Kiro — Tu WhatsApp que nunca duerme">
+<meta name="twitter:description" content="Kiro contesta, agenda y confirma tus citas por WhatsApp las 24 horas.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2312172B'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='19' fill='%232FA88A' text-anchor='middle'%3EK%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/tailwind.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12172B;
+    --ink-2:#1C2340;
+    --paper:#FAF6F0;
+    --paper-2:#F1EBE0;
+    --signal:#2FA88A;
+    --signal-light:#59CBAE;
+    --coral:#E2693F;
+    --slate:#5B6478;
+    --slate-light:#8A93A8;
+    --gold:#D9A441;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Manrope',sans-serif; background:var(--paper); color:var(--ink); margin:0;}
+  .font-display{font-family:'Fraunces',serif;}
+  .text-slate-light{color:var(--slate-light);}
+
+  /* Clock strip signature: 24h gradient with moving dot */
+  .clockstrip{
+    height:3px;
+    width:100%;
+    background:linear-gradient(90deg, var(--ink) 0%, var(--ink-2) 25%, var(--signal) 50%, var(--gold) 75%, var(--paper) 100%);
+    position:relative;
+    overflow:visible;
+  }
+  .clockstrip .dot{
+    position:absolute; top:50%; width:10px; height:10px; border-radius:50%;
+    background:#fff; box-shadow:0 0 0 4px rgba(47,168,138,0.25);
+    transform:translate(-50%,-50%);
+    animation:travel 6s linear infinite;
+  }
+  @keyframes travel{
+    0%{left:0%;}
+    100%{left:100%;}
+  }
+
+  /* Phone mockup */
+  .phone{
+    width:290px; border-radius:36px; background:var(--ink-2);
+    padding:14px; box-shadow:0 30px 60px -20px rgba(0,0,0,0.6);
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .phone-screen{
+    background:#0B0F1D; border-radius:24px; padding:16px 12px 12px;
+    min-height:420px; display:flex; flex-direction:column; gap:8px;
+  }
+  .bubble{
+    max-width:82%; padding:9px 13px; border-radius:16px; font-size:13.5px; line-height:1.4;
+    opacity:0; transform:translateY(6px); animation:pop 0.5s forwards;
+  }
+  .bubble.in{ align-self:flex-start; background:#232B45; color:#EDEFF6; border-bottom-left-radius:4px;}
+  .bubble.out{ align-self:flex-end; background:var(--signal); color:#08201A; border-bottom-right-radius:4px;}
+  @keyframes pop{ to{opacity:1; transform:translateY(0);} }
+  .b1{animation-delay:.3s;} .b2{animation-delay:1.3s;} .b3{animation-delay:2.3s;} .b4{animation-delay:3.3s;} .b5{animation-delay:4.3s;}
+
+  .typing span{display:inline-block; width:5px;height:5px;border-radius:50%;background:#8A93A8;margin:0 1px;animation:blink 1.2s infinite;}
+  .typing span:nth-child(2){animation-delay:.2s;} .typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.2;}40%{opacity:1;}}
+
+  .step-num{
+    font-family:'Fraunces',serif; font-size:2.75rem; font-weight:500; color:var(--signal); opacity:0.35; line-height:1;
+  }
+
+  details summary{cursor:pointer; list-style:none;}
+  details summary::-webkit-details-marker{display:none;}
+  details[open] .chev{transform:rotate(45deg);}
+  .chev{transition:transform .2s ease;}
+  .faq-icon{
+    flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--signal);
+    display:inline-flex; align-items:center; justify-content:center; margin-top:1px;
+  }
+  .faq-item{transition:border-color .2s ease, box-shadow .2s ease;}
+  .faq-item:hover{border-color:rgba(47,168,138,0.4); box-shadow:0 12px 28px -18px rgba(18,23,43,0.2);}
+
+  .card{background:var(--paper); border:1px solid rgba(18,23,43,0.08); border-radius:18px;}
+  .check-dot{
+    flex-shrink:0; width:18px; height:18px; border-radius:50%; background:var(--signal);
+    display:inline-flex; align-items:center; justify-content:center; margin-top:2px;
+  }
+  .btn-secondary{
+    background:transparent; color:var(--ink); font-weight:700; border-radius:999px;
+    padding:14px 28px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:1.5px solid rgba(18,23,43,0.15); transition:border-color .2s ease, background .2s ease;
+  }
+  .btn-secondary:hover{ border-color:rgba(18,23,43,0.35); background:rgba(18,23,43,0.03); }
+  .pro-card{
+    background:var(--ink); border-radius:18px; border:1px solid rgba(47,168,138,0.4);
+    box-shadow:0 30px 60px -25px rgba(47,168,138,0.45), 0 0 0 1px rgba(47,168,138,0.15);
+    transform:scale(1.035); transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .pro-card:hover{ transform:scale(1.05); box-shadow:0 34px 70px -25px rgba(47,168,138,0.55), 0 0 0 1px rgba(47,168,138,0.25); }
+  @media (max-width:768px){ .pro-card{ transform:none; } .pro-card:hover{ transform:none; } }
+  .pain-card{transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;}
+  .pain-card:hover{transform:translateY(-5px); box-shadow:0 20px 40px -20px rgba(18,23,43,0.18); border-color:rgba(226,105,63,0.35);}
+  .step-card{transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;}
+  .step-card:hover{transform:translateY(-5px); box-shadow:0 20px 40px -20px rgba(18,23,43,0.15); border-color:rgba(47,168,138,0.4);}
+  .btn-primary{
+    background:var(--signal); color:#08201A; font-weight:700; border-radius:999px;
+    padding:14px 28px; display:inline-flex; align-items:center; gap:8px; transition:transform .15s ease, box-shadow .15s ease;
+    box-shadow:0 10px 24px -8px rgba(47,168,138,0.55);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 14px 30px -8px rgba(47,168,138,0.65); }
+  .btn-ghost{
+    border:1.5px solid rgba(255,255,255,0.25); color:#fff; border-radius:999px; padding:13px 26px; font-weight:600;
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:8px; background:rgba(47,168,138,0.12); color:var(--signal);
+    border:1px solid rgba(47,168,138,0.3); border-radius:999px; padding:6px 14px; font-size:13px; font-weight:700; letter-spacing:.02em;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="fixed top-0 w-full z-50 backdrop-blur bg-ink/90 border-b border-white/5">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <span class="font-display text-2xl text-white tracking-tight">Kiro</span>
+    <div class="hidden md:flex items-center gap-8 text-sm text-slate-light" style="color:#B7BECF;">
+      <a href="#problema" class="hover:text-white">El problema</a>
+      <a href="#solucion" class="hover:text-white">Cómo funciona</a>
+      <a href="#demo" class="hover:text-white">En acción</a>
+      <a href="#precios" class="hover:text-white">Precios</a>
+      <a href="#faq" class="hover:text-white">FAQ</a>
+    </div>
+    <a href="#precios" class="btn-primary" style="padding:9px 20px; font-size:14px;">Empezar ahora</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="bg-ink pt-32 pb-20 md:pt-40 md:pb-28 relative overflow-hidden">
+  <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center relative z-10">
+    <div>
+      <span class="badge">● Activo ahora mismo — 03:14 AM</span>
+      <h1 class="font-display text-white text-4xl md:text-5xl leading-tight mt-6" style="letter-spacing:-0.01em;">
+        No hay dinero en el mundo<br> que pueda pagar <span class="text-signal italic">1 segundo</span> de tiempo.
+      </h1>
+      <p class="mt-6 text-lg" style="color:#B7BECF; max-width:38ch;">
+        Kiro contesta, agenda y confirma tus citas por WhatsApp — de madrugada, en domingo, en tu día libre. Tú solo abres la agenda llena.
+      </p>
+      <div class="mt-9 flex flex-wrap gap-4">
+        <a href="#demo" class="btn-primary">▶ Ver cómo reserva un cliente (50s)</a>
+        <a href="#precios" class="btn-ghost">Probar Kiro gratis 7 días</a>
+      </div>
+      <p class="mt-6 text-sm" style="color:#6D768C;">Sin permanencia. Sin tarjeta hasta que quieras activarlo.</p>
+    </div>
+
+    <div class="flex justify-center">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="text-xs pb-2 mb-1" style="color:#6D768C; border-bottom:1px solid rgba(255,255,255,0.06);">Peluquería Aura · WhatsApp</div>
+          <div class="bubble in b1">Hola! Tenéis hueco para cortarme el pelo el jueves por la tarde?</div>
+          <div class="bubble out b2">¡Claro! El jueves tengo libre a las 17:00 o a las 18:30. ¿Cuál prefieres?</div>
+          <div class="bubble in b3">A las 18:30 mejor</div>
+          <div class="bubble out b4">Perfecto, te reservo el jueves a las 18:30 ✅ Te escribo un recordatorio el día antes.</div>
+          <div class="bubble in b5" style="align-self:flex-start;"><span class="typing"><span></span><span></span><span></span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="clockstrip"><div class="dot"></div></div>
+
+<!-- PROBLEMA -->
+<section id="problema" class="bg-paper py-24">
+  <div class="max-w-6xl mx-auto px-6">
+    <p class="text-coral font-bold text-sm tracking-wide uppercase">El coste real de un WhatsApp sin contestar</p>
+    <h2 class="font-display text-3xl md:text-4xl mt-3 max-w-2xl">Cada mensaje que tarda en responderse es una reserva que se va a la competencia.</h2>
+
+    <div class="flex flex-wrap gap-2 mt-6">
+      <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-ink/5 text-slate">Peluquerías</span>
+      <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-ink/5 text-slate">Clínicas</span>
+      <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-ink/5 text-slate">Academias</span>
+      <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-ink/5 text-slate">Y cualquier negocio que viva de sus reservas</span>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-10">
+
+      <div class="card p-7 pain-card">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center" style="background:rgba(226,105,63,0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2693F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.5A8.5 8.5 0 1 1 11.5 4a6.5 6.5 0 0 0 9.5 8.5Z"/></svg>
+        </div>
+        <h3 class="font-display text-xl mt-5 mb-2">Cerrado no significa que dejen de escribirte</h3>
+        <p class="text-slate text-sm leading-relaxed">Fuera de horario, fines de semana, mientras atiendes a otro cliente: los mensajes se acumulan y muchos ya no vuelven.</p>
+        <div class="mt-5 rounded-xl p-3" style="background:var(--paper-2); border:1px solid rgba(18,23,43,0.06);">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-ink">Peluquería Aura</span>
+            <span class="text-xs" style="color:#9A9385;">23:47</span>
+          </div>
+          <p class="text-xs text-slate mt-1">"¿Tenéis hueco mañana por la tarde?"</p>
+          <span class="inline-block mt-2 text-xs font-semibold text-coral">Sin leer</span>
+        </div>
+      </div>
+
+      <div class="card p-7 pain-card">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center" style="background:rgba(226,105,63,0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2693F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z"/><path d="M3 20c1.5-3 4.5-4 9-4s7.5 1 9 4"/></svg>
+        </div>
+        <h3 class="font-display text-xl mt-5 mb-2">Contestar WhatsApp no es tu trabajo</h3>
+        <p class="text-slate text-sm leading-relaxed">Cada vez que sueltas lo que tienes entre manos para responder "¿tenéis hueco el jueves?", pierdes minutos que no facturas.</p>
+        <div class="mt-5 rounded-xl p-3" style="background:var(--paper-2); border:1px solid rgba(18,23,43,0.06);">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-ink">Clínica Dental Ruiz</span>
+            <span class="text-xs" style="color:#9A9385;">12:15</span>
+          </div>
+          <p class="text-xs text-slate mt-1">"¿Me confirmáis la cita del jueves?"</p>
+          <span class="inline-block mt-2 text-xs font-semibold text-coral">Interrumpe una consulta</span>
+        </div>
+      </div>
+
+      <div class="card p-7 pain-card">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center" style="background:rgba(226,105,63,0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2693F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/><path d="m9.5 14 5 5m0-5-5 5"/></svg>
+        </div>
+        <h3 class="font-display text-xl mt-5 mb-2">Los errores de agenda cuestan clientes</h3>
+        <p class="text-slate text-sm leading-relaxed">Un hueco mal apuntado, una cita duplicada, un "se me olvidó confirmar" — así se pierde la confianza.</p>
+        <div class="mt-5 rounded-xl p-3" style="background:var(--paper-2); border:1px solid rgba(18,23,43,0.06);">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-ink">Academia Code&Go</span>
+            <span class="text-xs" style="color:#9A9385;">Ayer</span>
+          </div>
+          <p class="text-xs text-slate mt-1">"Puse el grupo de las 18h dos veces sin querer"</p>
+          <span class="inline-block mt-2 text-xs font-semibold text-coral">Reserva duplicada</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SOLUCION -->
+<section id="solucion" class="bg-paper2 py-24">
+  <div class="max-w-6xl mx-auto px-6">
+    <p class="text-signal font-bold text-sm tracking-wide uppercase">Así de simple</p>
+    <h2 class="font-display text-3xl md:text-4xl mt-3 max-w-2xl">Tú sigues con tu negocio. Kiro se encarga del WhatsApp.</h2>
+    <p class="mt-5 text-base text-slate max-w-2xl">Todo el trabajo de puesta en marcha es nuestro. Tú das acceso y respondes un par de preguntas sobre tu negocio; el resto lo montamos nosotros.</p>
+
+    <div class="relative mt-16">
+      <div class="hidden md:block absolute" style="top:24px; left:8%; right:8%; height:1px; background:linear-gradient(90deg, rgba(47,168,138,0.05), rgba(47,168,138,0.4) 15%, rgba(47,168,138,0.4) 85%, rgba(47,168,138,0.05));"></div>
+
+      <div class="grid md:grid-cols-3 gap-8 relative">
+
+        <div class="card p-7 step-card">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center relative z-10" style="background:var(--signal);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.5 6.5 10 4 12.5 9 17.5l11-11L17.5 4 9 12.5Z"/></svg>
+          </div>
+          <span class="inline-block mt-4 text-xs font-bold px-2.5 py-1 rounded-full" style="background:rgba(47,168,138,0.12); color:var(--signal);">24–48 horas</span>
+          <h3 class="font-display text-xl mt-3 mb-2">Te damos de alta</h3>
+          <p class="text-slate text-sm leading-relaxed">Conectamos tu número de WhatsApp Business, sin que lo cambies ni instales nada raro.</p>
+          <div class="mt-5 text-xs text-slate" style="border-top:1px solid rgba(18,23,43,0.08); padding-top:12px;">Lo único que necesitamos de ti: acceso a tu cuenta de Meta Business.</div>
+        </div>
+
+        <div class="card p-7 step-card">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center relative z-10" style="background:var(--signal);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2.5M12 18.5V21M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M3 12h2.5M18.5 12H21M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <span class="inline-block mt-4 text-xs font-bold px-2.5 py-1 rounded-full" style="background:rgba(47,168,138,0.12); color:var(--signal);">1 día</span>
+          <h3 class="font-display text-xl mt-3 mb-2">Entrenamos la IA con tu negocio</h3>
+          <p class="text-slate text-sm leading-relaxed">Horarios, servicios, precios, forma de hablar: Kiro responde como lo haría alguien de tu equipo.</p>
+          <div class="mt-5 text-xs text-slate" style="border-top:1px solid rgba(18,23,43,0.08); padding-top:12px;">Revisamos juntos las primeras conversaciones antes de dejarlo 100% en automático.</div>
+        </div>
+
+        <div class="card p-7 step-card">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center relative z-10" style="background:var(--signal);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/><path d="m8.5 14 2.3 2.3L15.5 12"/></svg>
+          </div>
+          <span class="inline-block mt-4 text-xs font-bold px-2.5 py-1 rounded-full" style="background:rgba(47,168,138,0.12); color:var(--signal);">Automático desde ya</span>
+          <h3 class="font-display text-xl mt-3 mb-2">Kiro empieza a reservar solo</h3>
+          <p class="text-slate text-sm leading-relaxed">Cada conversación se agenda automáticamente. Tú recibes la agenda actualizada, sin mover un dedo.</p>
+          <div class="mt-5 text-xs text-slate" style="border-top:1px solid rgba(18,23,43,0.08); padding-top:12px;">Si Kiro no sabe algo, te avisa antes de responder — nunca se lo inventa.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EN ACCION -->
+<section id="demo" class="bg-ink py-24">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="max-w-2xl">
+      <p class="text-signal font-bold text-sm tracking-wide uppercase">Así se ve por dentro</p>
+      <h2 class="font-display text-3xl md:text-4xl mt-3 text-white">Una reserva de verdad, paso a paso</h2>
+      <p class="mt-5 text-base" style="color:#B7BECF;">Capturas de nuestra peluquería piloto. Sin editar, sin actores, sin trucos de vídeo.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mt-14">
+
+      <!-- Captura 1: reemplaza el div de abajo por <img src="capturas/1-mensaje-cliente.png" class="w-full h-full object-cover rounded-2xl" alt="Cliente escribiendo por WhatsApp fuera de horario"> -->
+      <div>
+        <div class="rounded-2xl flex items-center justify-center text-center px-6" style="aspect-ratio:9/16; background:#1C2340; border:1.5px dashed #3A4568;">
+          <p class="text-xs" style="color:#6D768C;">Sustituir por captura:<br>chat entrante fuera de horario</p>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <span class="font-display text-signal text-lg">01</span>
+          <h3 class="font-semibold text-white text-sm">Escribe a las 23:40, un jueves</h3>
+        </div>
+        <p class="text-xs mt-2" style="color:#8A93A8;">Fuera de horario, la peluquería está cerrada. El cliente no lo sabe ni le importa.</p>
+      </div>
+
+      <!-- Captura 2: reemplaza el div de abajo por <img src="capturas/2-kiro-responde.png" class="w-full h-full object-cover rounded-2xl" alt="Kiro respondiendo y confirmando la reserva"> -->
+      <div>
+        <div class="rounded-2xl flex items-center justify-center text-center px-6" style="aspect-ratio:9/16; background:#1C2340; border:1.5px dashed #3A4568;">
+          <p class="text-xs" style="color:#6D768C;">Sustituir por captura:<br>Kiro preguntando hora y confirmando</p>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <span class="font-display text-signal text-lg">02</span>
+          <h3 class="font-semibold text-white text-sm">Kiro pregunta lo justo y confirma</h3>
+        </div>
+        <p class="text-xs mt-2" style="color:#8A93A8;">Sin formularios ni menús raros. Habla como lo haría alguien del equipo.</p>
+      </div>
+
+      <!-- Captura 3: reemplaza el div de abajo por <img src="capturas/3-agenda-actualizada.png" class="w-full h-full object-cover rounded-2xl" alt="Google Sheets actualizado solo con la nueva reserva"> -->
+      <div>
+        <div class="rounded-2xl flex items-center justify-center text-center px-6" style="aspect-ratio:9/16; background:#1C2340; border:1.5px dashed #3A4568;">
+          <p class="text-xs" style="color:#6D768C;">Sustituir por captura:<br>agenda (Sheets) actualizada sola</p>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <span class="font-display text-signal text-lg">03</span>
+          <h3 class="font-semibold text-white text-sm">La agenda se actualiza sola</h3>
+        </div>
+        <p class="text-xs mt-2" style="color:#8A93A8;">A la mañana siguiente, la reserva ya está ahí. Nadie tuvo que apuntarla.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PRECIOS -->
+<section id="precios" class="bg-paper py-24">
+  <div class="max-w-5xl mx-auto px-6 text-center">
+    <p class="text-signal font-bold text-sm tracking-wide uppercase">Sin permanencia. Cancela cuando quieras.</p>
+    <h2 class="font-display text-3xl md:text-4xl mt-3">Un WhatsApp que nunca duerme, por menos de lo que cuesta una hora de un empleado</h2>
+    <p class="mt-4 text-sm text-slate max-w-md mx-auto">¿Cuánto te cuesta perder una sola reserva este mes? Kiro se paga solo con evitarlo una vez.</p>
+
+    <div class="grid md:grid-cols-2 gap-8 mt-16 text-left items-stretch">
+
+      <div class="card p-9 flex flex-col">
+        <h3 class="font-display text-2xl">Starter</h3>
+        <p class="text-slate text-sm mt-1">Para un solo negocio con volumen normal</p>
+        <div class="mt-6 flex items-baseline gap-1">
+          <span class="font-display text-5xl">49€</span>
+          <span class="text-slate">/mes</span>
+        </div>
+        <ul class="mt-7 space-y-3 text-sm flex-1">
+          <li class="flex items-start gap-2.5"><span class="check-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Bot 24/7 en tu WhatsApp Business</li>
+          <li class="flex items-start gap-2.5"><span class="check-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Agenda automática (hasta ~150 conversaciones/mes)</li>
+          <li class="flex items-start gap-2.5"><span class="check-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Altas, cambios y cancelaciones de reserva</li>
+          <li class="flex items-start gap-2.5"><span class="check-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Soporte por email</li>
+        </ul>
+        <!-- TODO: sustituye por tu Stripe Payment Link real cuando lo tengas creado -->
+        <a href="mailto:hola@kiro.app?subject=Quiero%20empezar%20con%20el%20plan%20Starter" class="btn-secondary w-full justify-center mt-8">Empezar ahora</a>
+        <p class="text-xs text-slate mt-3 text-center">Ideal si vas solo o sois dos en el negocio</p>
+      </div>
+
+      <div class="pro-card p-9 flex flex-col relative">
+        <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-signal text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap" style="color:#08201A;">Más elegido</span>
+        <h3 class="font-display text-2xl text-white">Pro</h3>
+        <p class="text-sm mt-1" style="color:#9FA8C2;">Para más volumen o varias sedes</p>
+        <div class="mt-6 flex items-baseline gap-1">
+          <span class="font-display text-5xl text-white">99€</span>
+          <span style="color:#9FA8C2;">/mes</span>
+        </div>
+        <ul class="mt-7 space-y-3 text-sm flex-1 text-white">
+          <li class="flex items-start gap-2.5"><span class="check-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Todo lo de Starter</li>
+          <li class="flex items-start gap-2.5"><span class="check-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Conversaciones ilimitadas</li>
+          <li class="flex items-start gap-2.5"><span class="check-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Informes mensuales de reservas</li>
+          <li class="flex items-start gap-2.5"><span class="check-dot"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Soporte prioritario</li>
+        </ul>
+        <!-- TODO: sustituye por tu Stripe Payment Link real cuando lo tengas creado -->
+        <a href="mailto:hola@kiro.app?subject=Quiero%20empezar%20con%20el%20plan%20Pro" class="btn-primary w-full justify-center mt-8">Empezar ahora</a>
+        <p class="text-xs mt-3 text-center" style="color:#9FA8C2;">Ideal si el WhatsApp no para en todo el día</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="bg-paper2 py-24">
+  <div class="max-w-4xl mx-auto px-6">
+    <p class="text-signal font-bold text-sm tracking-wide uppercase text-center">Preguntas frecuentes</p>
+    <h2 class="font-display text-3xl md:text-4xl mt-3 text-center">Todo lo que necesitas saber</h2>
+
+    <div class="grid md:grid-cols-2 gap-4 mt-12">
+
+      <details class="card p-6 faq-item" open>
+        <summary class="flex items-start justify-between gap-3 font-semibold cursor-pointer list-none">
+          <span class="flex items-start gap-3">
+            <span class="faq-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2 1.8-2 3.5"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></span>
+            <span>¿Necesito saber de tecnología?</span>
+          </span>
+          <span class="chev text-signal text-xl shrink-0">+</span>
+        </summary>
+        <p class="text-slate text-sm mt-3 leading-relaxed pl-11">No. Nosotros configuramos todo. Tú solo nos pasas el acceso a tu WhatsApp Business y nos cuentas cómo funciona tu negocio.</p>
+      </details>
+
+      <details class="card p-6 faq-item">
+        <summary class="flex items-start justify-between gap-3 font-semibold cursor-pointer list-none">
+          <span class="flex items-start gap-3">
+            <span class="faq-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11.5 18.5h1"/></svg></span>
+            <span>¿Tengo que cambiar de número de teléfono?</span>
+          </span>
+          <span class="chev text-signal text-xl shrink-0">+</span>
+        </summary>
+        <p class="text-slate text-sm mt-3 leading-relaxed pl-11">No, usamos el número que ya tienes en WhatsApp Business.</p>
+      </details>
+
+      <details class="card p-6 faq-item">
+        <summary class="flex items-start justify-between gap-3 font-semibold cursor-pointer list-none">
+          <span class="flex items-start gap-3">
+            <span class="faq-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 1 1-4.5-7.5"/><path d="M21 4v5h-5"/></svg></span>
+            <span>¿Qué pasa si el cliente pregunta algo que Kiro no sabe?</span>
+          </span>
+          <span class="chev text-signal text-xl shrink-0">+</span>
+        </summary>
+        <p class="text-slate text-sm mt-3 leading-relaxed pl-11">Kiro avisa que lo va a consultar y puedes intervenir cuando quieras. Nunca se inventa información sobre tu negocio.</p>
+      </details>
+
+      <details class="card p-6 faq-item">
+        <summary class="flex items-start justify-between gap-3 font-semibold cursor-pointer list-none">
+          <span class="flex items-start gap-3">
+            <span class="faq-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/><path d="m9.5 14 5 5m0-5-5 5"/></svg></span>
+            <span>¿Puedo cancelar cuando quiera?</span>
+          </span>
+          <span class="chev text-signal text-xl shrink-0">+</span>
+        </summary>
+        <p class="text-slate text-sm mt-3 leading-relaxed pl-11">Sí, es una suscripción mensual sin permanencia. Cancelas cuando quieras desde el enlace de gestión de tu suscripción.</p>
+      </details>
+
+      <details class="card p-6 faq-item">
+        <summary class="flex items-start justify-between gap-3 font-semibold cursor-pointer list-none">
+          <span class="flex items-start gap-3">
+            <span class="faq-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
+            <span>¿Cuánto tarda en estar activo?</span>
+          </span>
+          <span class="chev text-signal text-xl shrink-0">+</span>
+        </summary>
+        <p class="text-slate text-sm mt-3 leading-relaxed pl-11">Entre 24 y 48 horas desde que nos das acceso a tu WhatsApp Business.</p>
+      </details>
+
+      <details class="card p-6 faq-item">
+        <summary class="flex items-start justify-between gap-3 font-semibold cursor-pointer list-none">
+          <span class="flex items-start gap-3">
+            <span class="faq-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#08201A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6.5v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9v-5L12 3Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <span>¿Están seguros los datos de mis clientes?</span>
+          </span>
+          <span class="chev text-signal text-xl shrink-0">+</span>
+        </summary>
+        <p class="text-slate text-sm mt-3 leading-relaxed pl-11">Sí. Tus conversaciones y reservas se quedan en tu propia hoja de cálculo y tu cuenta de WhatsApp Business. No se comparten con terceros.</p>
+      </details>
+
+    </div>
+
+    <div class="mt-10 text-center">
+      <p class="text-slate text-sm">¿No encuentras tu pregunta?</p>
+      <a href="mailto:hola@kiro.app" class="text-signal font-semibold text-sm">Escríbenos y te respondemos en el día →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-ink py-14">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+      <span class="font-display text-xl text-white">Kiro</span>
+      <p class="text-sm" style="color:#6D768C;">No hay dinero en el mundo que pueda pagar 1 segundo de tiempo.</p>
+      <a href="mailto:hola@kiro.app" class="text-sm text-signal">hola@kiro.app</a>
+    </div>
+    <div class="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 mt-8 pt-8 text-xs" style="border-top:1px solid rgba(255,255,255,0.08); color:#6D768C;">
+      <a href="aviso-legal.html" class="hover:text-white">Aviso legal</a>
+      <a href="privacidad.html" class="hover:text-white">Privacidad</a>
+      <a href="cookies.html" class="hover:text-white">Cookies</a>
+      <a href="terminos.html" class="hover:text-white">Términos y condiciones</a>
+      <button onclick="kiroOpenCookieSettings()" class="hover:text-white underline" style="background:none;border:none;cursor:pointer;color:#6D768C;">Configurar cookies</button>
+    </div>
+  </div>
+</footer>
+
+<!-- COOKIE BANNER -->
+<div id="cookie-banner" style="position:fixed; left:0; right:0; bottom:0; z-index:100; display:none;">
+  <div class="max-w-3xl mx-4 md:mx-auto mb-4 rounded-2xl p-5 md:p-6" style="background:var(--ink); border:1px solid rgba(47,168,138,0.3); box-shadow:0 20px 50px -20px rgba(0,0,0,0.5);">
+    <div id="cookie-simple">
+      <p class="text-sm text-white font-semibold mb-1">Usamos cookies</p>
+      <p class="text-sm" style="color:#B7BECF;">Usamos cookies propias para que Kiro funcione correctamente, y cookies analíticas para entender cómo mejorar la web. Tú decides cuáles aceptas.</p>
+      <div class="flex flex-wrap gap-3 mt-4">
+        <button onclick="kiroCookieChoice('all')" class="btn-primary" style="padding:9px 20px; font-size:13px;">Aceptar todas</button>
+        <button onclick="kiroCookieChoice('necessary')" class="btn-ghost" style="padding:8px 20px; font-size:13px;">Rechazar no esenciales</button>
+        <button onclick="kiroShowCookieConfig()" class="text-xs font-semibold underline self-center" style="color:#9FA8C2; background:none; border:none; cursor:pointer;">Configurar</button>
+      </div>
+    </div>
+    <div id="cookie-config" style="display:none;">
+      <p class="text-sm text-white font-semibold mb-3">Configurar cookies</p>
+      <label class="flex items-center justify-between text-sm py-2" style="color:#B7BECF; border-bottom:1px solid rgba(255,255,255,0.08);">
+        Necesarias (siempre activas)
+        <input type="checkbox" checked disabled>
+      </label>
+      <label class="flex items-center justify-between text-sm py-2" style="color:#B7BECF;">
+        Analíticas
+        <input type="checkbox" id="cookie-analytics-toggle" checked>
+      </label>
+      <div class="flex flex-wrap gap-3 mt-4">
+        <button onclick="kiroSaveCookieConfig()" class="btn-primary" style="padding:9px 20px; font-size:13px;">Guardar preferencias</button>
+      </div>
+    </div>
+    <p class="text-xs mt-3" style="color:#6D768C;">Más info en nuestra <a href="cookies.html" class="underline hover:text-white">Política de cookies</a></p>
+  </div>
+</div>
+
+<script>
+  function kiroGetConsent(){ try { return JSON.parse(localStorage.getItem('kiro_cookie_consent')); } catch(e){ return null; } }
+  function kiroSetConsent(consent){ localStorage.setItem('kiro_cookie_consent', JSON.stringify(consent)); document.getElementById('cookie-banner').style.display='none'; }
+  function kiroCookieChoice(type){
+    if(type === 'all'){ kiroSetConsent({necessary:true, analytics:true}); }
+    else { kiroSetConsent({necessary:true, analytics:false}); }
+  }
+  function kiroShowCookieConfig(){
+    document.getElementById('cookie-simple').style.display='none';
+    document.getElementById('cookie-config').style.display='block';
+  }
+  function kiroSaveCookieConfig(){
+    var analytics = document.getElementById('cookie-analytics-toggle').checked;
+    kiroSetConsent({necessary:true, analytics:analytics});
+  }
+  function kiroOpenCookieSettings(){
+    document.getElementById('cookie-banner').style.display='block';
+    document.getElementById('cookie-simple').style.display='none';
+    document.getElementById('cookie-config').style.display='block';
+    var c = kiroGetConsent();
+    if(c){ document.getElementById('cookie-analytics-toggle').checked = !!c.analytics; }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    if(!kiroGetConsent()){ document.getElementById('cookie-banner').style.display='block'; }
+  });
+</script>
+
+</body>
+</html>
